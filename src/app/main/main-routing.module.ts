@@ -13,7 +13,7 @@ import { RouterModule } from '@angular/router';
                         data: { permission: 'Pages.Tenant.Dashboard' },
                     },
                     {
-                        path: 'employees',
+                        path: 'employee',
                         loadChildren: () => import('./employees/employees.module').then((m) => m.EmployeesModule)
                     },
                     { path: '', redirectTo: 'dashboard', pathMatch: 'full' },

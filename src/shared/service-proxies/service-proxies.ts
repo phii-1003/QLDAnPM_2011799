@@ -4806,6 +4806,75 @@ export class EditionServiceProxy {
 }
 
 @Injectable()
+export class EmployeesServiceProxy {
+    private http: HttpClient;
+    private baseUrl: string;
+    protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+
+    constructor(@Inject(HttpClient) http: HttpClient, @Optional() @Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl !== undefined && baseUrl !== null ? baseUrl : "";
+    }
+
+    /**
+     * @param filter (optional) 
+     * @return Success
+     */
+    getEmployees(filter: string | undefined): Observable<ListResultDtoOfEmployeeListDto> {
+        let url_ = this.baseUrl + "/api/services/app/Employees/GetEmployees?";
+        if (filter === null)
+            throw new Error("The parameter 'filter' cannot be null.");
+        else if (filter !== undefined)
+            url_ += "Filter=" + encodeURIComponent("" + filter) + "&";
+        url_ = url_.replace(/[?&]$/, "");
+
+        let options_ : any = {
+            observe: "response",
+            responseType: "blob",
+            headers: new HttpHeaders({
+                "Accept": "text/plain"
+            })
+        };
+
+        return this.http.request("get", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+            return this.processGetEmployees(response_);
+        })).pipe(_observableCatch((response_: any) => {
+            if (response_ instanceof HttpResponseBase) {
+                try {
+                    console.log(this.processGetEmployees(<any>response_));
+                    return this.processGetEmployees(<any>response_);
+                } catch (e) {
+                    return <Observable<ListResultDtoOfEmployeeListDto>><any>_observableThrow(e);
+                }
+            } else
+                return <Observable<ListResultDtoOfEmployeeListDto>><any>_observableThrow(response_);
+        }));
+    }
+
+    protected processGetEmployees(response: HttpResponseBase): Observable<ListResultDtoOfEmployeeListDto> {
+        const status = response.status;
+        const responseBlob =
+            response instanceof HttpResponse ? response.body :
+            (<any>response).error instanceof Blob ? (<any>response).error : undefined;
+
+        let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+        if (status === 200) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            let result200: any = null;
+            let resultData200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver);
+            result200 = ListResultDtoOfEmployeeListDto.fromJS(resultData200);
+            return _observableOf(result200);
+            }));
+        } else if (status !== 200 && status !== 204) {
+            return blobToText(responseBlob).pipe(_observableMergeMap(_responseText => {
+            return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+            }));
+        }
+        return _observableOf<ListResultDtoOfEmployeeListDto>(<any>null);
+    }
+}
+
+@Injectable()
 export class FriendshipServiceProxy {
     private http: HttpClient;
     private baseUrl: string;
@@ -17190,6 +17259,94 @@ export interface IEmailSettingsEditDto {
     smtpUseDefaultCredentials: boolean;
 }
 
+export class EmployeeListDto implements IEmployeeListDto {
+    name!: string | undefined;
+    phoneNumber!: string | undefined;
+    ssn!: string | undefined;
+    employeeID!: string | undefined;
+    address!: string | undefined;
+    yearOfBirth!: number;
+    isDeleted!: boolean;
+    deleterUserId!: number | undefined;
+    deletionTime!: DateTime | undefined;
+    lastModificationTime!: DateTime | undefined;
+    lastModifierUserId!: number | undefined;
+    creationTime!: DateTime;
+    creatorUserId!: number | undefined;
+    id!: number;
+
+    constructor(data?: IEmployeeListDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            this.name = _data["name"];
+            this.phoneNumber = _data["phoneNumber"];
+            this.ssn = _data["ssn"];
+            this.employeeID = _data["employeeID"];
+            this.address = _data["address"];
+            this.yearOfBirth = _data["yearOfBirth"];
+            this.isDeleted = _data["isDeleted"];
+            this.deleterUserId = _data["deleterUserId"];
+            this.deletionTime = _data["deletionTime"] ? DateTime.fromISO(_data["deletionTime"].toString()) : <any>undefined;
+            this.lastModificationTime = _data["lastModificationTime"] ? DateTime.fromISO(_data["lastModificationTime"].toString()) : <any>undefined;
+            this.lastModifierUserId = _data["lastModifierUserId"];
+            this.creationTime = _data["creationTime"] ? DateTime.fromISO(_data["creationTime"].toString()) : <any>undefined;
+            this.creatorUserId = _data["creatorUserId"];
+            this.id = _data["id"];
+        }
+    }
+
+    static fromJS(data: any): EmployeeListDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new EmployeeListDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        data["name"] = this.name;
+        data["phoneNumber"] = this.phoneNumber;
+        data["ssn"] = this.ssn;
+        data["employeeID"] = this.employeeID;
+        data["address"] = this.address;
+        data["yearOfBirth"] = this.yearOfBirth;
+        data["isDeleted"] = this.isDeleted;
+        data["deleterUserId"] = this.deleterUserId;
+        data["deletionTime"] = this.deletionTime ? this.deletionTime.toString() : <any>undefined;
+        data["lastModificationTime"] = this.lastModificationTime ? this.lastModificationTime.toString() : <any>undefined;
+        data["lastModifierUserId"] = this.lastModifierUserId;
+        data["creationTime"] = this.creationTime ? this.creationTime.toString() : <any>undefined;
+        data["creatorUserId"] = this.creatorUserId;
+        data["id"] = this.id;
+        return data; 
+    }
+}
+
+export interface IEmployeeListDto {
+    name: string | undefined;
+    phoneNumber: string | undefined;
+    ssn: string | undefined;
+    employeeID: string | undefined;
+    address: string | undefined;
+    yearOfBirth: number;
+    isDeleted: boolean;
+    deleterUserId: number | undefined;
+    deletionTime: DateTime | undefined;
+    lastModificationTime: DateTime | undefined;
+    lastModifierUserId: number | undefined;
+    creationTime: DateTime;
+    creatorUserId: number | undefined;
+    id: number;
+}
+
 export class EntityChangeListDto implements IEntityChangeListDto {
     userId!: number | undefined;
     userName!: string | undefined;
@@ -21794,6 +21951,50 @@ export class ListResultDtoOfEditionListDto implements IListResultDtoOfEditionLis
 
 export interface IListResultDtoOfEditionListDto {
     items: EditionListDto[] | undefined;
+}
+
+export class ListResultDtoOfEmployeeListDto implements IListResultDtoOfEmployeeListDto {
+    items!: EmployeeListDto[] | undefined;
+
+    constructor(data?: IListResultDtoOfEmployeeListDto) {
+        if (data) {
+            for (var property in data) {
+                if (data.hasOwnProperty(property))
+                    (<any>this)[property] = (<any>data)[property];
+            }
+        }
+    }
+
+    init(_data?: any) {
+        if (_data) {
+            if (Array.isArray(_data["items"])) {
+                this.items = [] as any;
+                for (let item of _data["items"])
+                    this.items!.push(EmployeeListDto.fromJS(item));
+            }
+        }
+    }
+
+    static fromJS(data: any): ListResultDtoOfEmployeeListDto {
+        data = typeof data === 'object' ? data : {};
+        let result = new ListResultDtoOfEmployeeListDto();
+        result.init(data);
+        return result;
+    }
+
+    toJSON(data?: any) {
+        data = typeof data === 'object' ? data : {};
+        if (Array.isArray(this.items)) {
+            data["items"] = [];
+            for (let item of this.items)
+                data["items"].push(item.toJSON());
+        }
+        return data; 
+    }
+}
+
+export interface IListResultDtoOfEmployeeListDto {
+    items: EmployeeListDto[] | undefined;
 }
 
 export class ListResultDtoOfFlatPermissionWithLevelDto implements IListResultDtoOfFlatPermissionWithLevelDto {
